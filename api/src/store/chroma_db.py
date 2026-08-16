@@ -21,26 +21,13 @@ class VectorStore:
         else:
             self.client = chromadb.Client()
         self.collection = self.client.get_or_create_collection(
-            self.collection_name, metadata={"description": "candidate resumes"}
+            self.collection_name, metadata={"hnsw:space": "cosine"}
         )
 
-    def add_document(self, documents: list[Document], embeddings: np.ndarray) -> None:
-        if len(documents) != len(embeddings):
-            raise ValueError(
-                "Length of documents should be equal to the length of embeddings"
-            )
-
-        ids: list[str] = []
-        documents_text: list[str] = []
-        metadatas: list[Metadata] = []
-        embeddings_list: list[np.ndarray] = []
-
-        for i, (doc, embedding) in enumerate(zip(documents, embeddings)):
-            doc_id: str = uuid4().hex[:8]
-            ids.append(doc_id)
-            documents_text.append(doc.page_content)
-            embeddings_list.append(embedding.tolist())
-            metadata = dict(doc.metadata)
-            metadatas.append(metadata)
-
-        self.collection.add(ids, embeddings_list, metadatas, documents_text)
+    def add_documents(self, embedded_list: list) -> None:
+        self.collection.add(
+            ids=[e["id"] for e in embedded_list],
+            embeddings=[e["vector"] for e in embedded_list],
+            metadatas=[e["metadata"] for e in embedded_list],
+            documents=[e["document"] for e in embedded_list],
+        )
