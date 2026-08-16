@@ -1,10 +1,6 @@
 from pathlib import Path
-from uuid import uuid4
 
 import chromadb
-from chromadb.api.types import Metadata
-from langchain_core.documents import Document
-import numpy as np
 
 
 class VectorStore:
