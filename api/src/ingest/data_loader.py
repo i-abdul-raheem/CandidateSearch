@@ -69,9 +69,15 @@ class DataLoader:
             doc.metadata['source'] = str(resume)
             docs.append(doc)
         return docs
+
+    def load_document(self, path: Path) -> list[Document]:
+        if not path.exists():
+            raise ValueError(f"File {path} not found!")
+        doc = parse_resume(path)
+        doc.metadata['source'] = str(path)
+        return [doc]
     
-    def split_documents(self):
-        docs = self._load_docs()
+    def split_documents(self, docs: list[Document]) -> list[Document]:
         final_chunks = []
 
         for doc in docs:

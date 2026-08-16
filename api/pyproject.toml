@@ -18,3 +18,5 @@ dependencies = [
     "sentence-transformers>=5.7.0",
     "tqdm>=4.70.0",
 ]
+[tool.fastapi]
+reload_excludes = [".venv", "data", "chroma_db"]
