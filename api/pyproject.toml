@@ -1,0 +1,17 @@
+[project]
+name = "candidate-search"
+version = "0.1.0"
+description = "wii update later"
+author = "Abdul Raheem"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "chromadb>=1.5.9",
+    "fastapi[standard]>=0.141.1",
+    "ipykernel>=7.3.0",
+    "langchain>=1.3.15",
+    "langchain-core>=1.5.5",
+    "pymupdf>=1.28.2",
+    "python-multipart>=0.0.32",
+    "tqdm>=4.70.0",
+]

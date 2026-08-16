@@ -1,0 +1,21 @@
+from pathlib import Path
+
+import chromadb
+
+class VectorStore:
+    def __init__(
+            self,
+            collection_name: str,
+            persist_directory: Path | None = None
+            ):
+        self.persist_directory = persist_directory
+        self.collection_name = collection_name
+        self.client = None
+
+    def _initiate_store(self):
+        if self.persist_directory:
+            Path(self.persist_directory).mkdir(exist_ok=True, parents=True)
+            self.client = chromadb.PersistentClient(path=self.persist_directory)
+        else:
+            self.client = chromadb.Client()
+        self.collection = self.client.get_or_create_collection(self.collection_name, metadata={})
