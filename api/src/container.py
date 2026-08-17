@@ -20,6 +20,36 @@ class ServiceContainer:
         from src.ingest.data_loader import DataLoader
         return DataLoader(data_dir=Path("data/pdf"))
 
+    @cached_property
+    def get_llm_chain(self):
+        from langchain_ollama import ChatOllama
+        from langchain_core.prompts import ChatPromptTemplate
+        
+        llm = ChatOllama(
+            model="qwen3:4b", 
+            temperature=0.2,
+            format="json",
+            keep_alive="5m"
+        )
+        
+        system_message = """
+            You are a senior technical recruiter. Compare JD and Resume.
+            Return JSON with this exact structure:
+            {{
+            "verdict": "Strong Match / Partial Match / No Match",
+            "strengths": ["3-5 bullets why they fit"],
+            "gaps": ["1-3 missing skills"],
+            "summary": "2-3 sentence summary"
+            }}
+            Only return valid JSON. No thinking tags.
+        """
+
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_message),
+            ("human", "JOB DESCRIPTION:\n{jd_text}\n\nRESUME ({resume_id}):\n{full_resume_text}")
+        ])
+        
+        return prompt | llm
 
 @lru_cache(maxsize=1)
 def get_service_container() -> ServiceContainer:

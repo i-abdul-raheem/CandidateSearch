@@ -7,7 +7,7 @@ from pathlib import Path
 
 router = APIRouter(tags=['apply'])
 
-@router.post("/")
+@router.post("/apply")
 async def apply_job(
     file: UploadFile = File(...)
 ) -> dict[str, str | Document]:
