@@ -1,3 +1,4 @@
+import hashlib
 from typing import Any
 
 from langchain_core.documents import Document
@@ -38,11 +39,13 @@ class EmbeddingManager:
 
         return [
             {
-                "id": f"{c.metadata.get('source', 'doc')}_{c.metadata.get('chunk_type', 'other')}_{i}",
+                "id": hashlib.sha256(
+                    f"{c.metadata.get('source', 'doc')}:{i}:{c.page_content}".encode()
+                ).hexdigest(),
                 "vector": emb.tolist(),
                 "document": c.page_content,  # clean text, no prefix
                 "metadata": {
-                    "resume_id": str(c.metadata.get("source", f"doc_{i}")),
+                    "resume_id": str(c.metadata.get("resume_id", c.metadata.get("source", f"doc_{i}"))),
                     "chunk_type": c.metadata.get("chunk_type", "other"),
                     **c.metadata,
                 },

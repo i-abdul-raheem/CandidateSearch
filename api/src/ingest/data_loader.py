@@ -58,9 +58,7 @@ SPLIT_PATTERN = r"(?im)^\s*((?:" + "|".join(SECTION_HEADERS) + r")\b.*$)"
 class DataLoader:
     def __init__(self, data_dir : Path):
         self.data_dir = data_dir
-        if not self.data_dir.exists():
-            raise ValueError("Data directory not found!")
-        self._documents: list[Document] = self._load_docs()
+        self.data_dir.mkdir(parents=True, exist_ok=True)
     
     def _load_docs(self) -> list[Document]:
         docs: list[Document] = []
@@ -75,6 +73,11 @@ class DataLoader:
             raise ValueError(f"File {path} not found!")
         doc = parse_resume(path)
         doc.metadata['source'] = str(path)
+        return [doc]
+
+    def load_bytes(self, content: bytes, source: str) -> list[Document]:
+        doc = parse_resume(content, is_stream=True)
+        doc.metadata["source"] = source
         return [doc]
     
     def split_documents(self, docs: list[Document]) -> list[Document]:
@@ -107,5 +110,16 @@ class DataLoader:
                     page_content=f"{header.upper()}: {content}",
                     metadata={**doc.metadata, "chunk_type": ctype}
                 ))
+
+            # Some CVs use visual formatting instead of recognizable headings.
+            # Keeping bounded fallback chunks prevents valid resumes disappearing.
+            if not any(c.metadata.get("source") == doc.metadata.get("source") for c in final_chunks):
+                for start in range(0, len(text), 1800):
+                    content = text[start:start + 2000].strip()
+                    if len(content) >= 30:
+                        final_chunks.append(Document(
+                            page_content=content,
+                            metadata={**doc.metadata, "chunk_type": "other"},
+                        ))
 
         return final_chunks

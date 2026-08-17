@@ -1,24 +1,24 @@
 from functools import cached_property, lru_cache
-from pathlib import Path
+from src.config import Settings, settings
 
 class ServiceContainer:
-    def __init__(self):
-        pass
+    def __init__(self, config: Settings = settings):
+        self.config = config
 
     @cached_property
     def get_embedding_manager(self):
         from src.embeddings.embed import EmbeddingManager
-        return EmbeddingManager("intfloat/multilingual-e5-large")
+        return EmbeddingManager(self.config.embedding_model)
 
     @cached_property
     def get_vector_store(self):
         from src.store.chroma_db import VectorStore
-        return VectorStore(collection_name='resumes', persist_directory=Path("data"))
+        return VectorStore(collection_name="resumes", persist_directory=self.config.data_dir)
 
     @cached_property
     def get_data_loader(self):
         from src.ingest.data_loader import DataLoader
-        return DataLoader(data_dir=Path("data/pdf"))
+        return DataLoader(data_dir=self.config.resume_dir)
 
     @cached_property
     def get_llm_chain(self):
@@ -26,10 +26,11 @@ class ServiceContainer:
         from langchain_core.prompts import ChatPromptTemplate
         
         llm = ChatOllama(
-            model="qwen3:4b", 
+            model=self.config.ollama_model,
             temperature=0.2,
             format="json",
-            keep_alive="5m"
+            keep_alive="5m",
+            base_url=self.config.ollama_base_url,
         )
         
         system_message = """

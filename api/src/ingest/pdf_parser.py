@@ -31,17 +31,22 @@ def clean_resume_text(text: str) -> str:
 
     return "\n".join(lines).strip()
 
-def parse_resume(path_or_bytes, isStream : bool = False) -> Document:
-    if isStream:
-        doc = pymupdf.open(
-                stream=path_or_bytes,
-                filetype="pdf"
+def parse_resume(path_or_bytes, is_stream: bool = False) -> Document:
+    try:
+        document = (
+            pymupdf.open(stream=path_or_bytes, filetype="pdf")
+            if is_stream
+            else pymupdf.open(path_or_bytes)
+        )
+        with document:
+            page_content = "\n".join(
+                page.get_text("text", sort=True) for page in document.pages()
             )
-    else:
-        doc = pymupdf.open(path_or_bytes)
-    page_content = "/n".join([page.get_text("text", sort=True) for page in doc.pages()])
-    metadata = doc.metadata
-    return Document(
-        page_content=clean_resume_text(page_content),
-        metadata=metadata
-    )
+            metadata = dict(document.metadata or {})
+    except (pymupdf.FileDataError, ValueError, TypeError) as exc:
+        raise ValueError("The uploaded file is not a valid PDF.") from exc
+
+    cleaned = clean_resume_text(page_content)
+    if not cleaned:
+        raise ValueError("The PDF contains no extractable text.")
+    return Document(page_content=cleaned, metadata=metadata)

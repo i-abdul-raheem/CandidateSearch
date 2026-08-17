@@ -1,28 +1,23 @@
 import json
-from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from src.container import get_service_container
+from src.config import settings
+from src.schemas import ExplainRequest, ExplainResponse
+from src.security import require_api_key
 
-router = APIRouter(tags=['explain'])
-
-class ExplainRequest(BaseModel):
-    resume_id: str
-    jd_text: str
-
-class ExplainResponse(BaseModel):
-    resume_id: str
-    match_score: int
-    verdict: str
-    strengths: list[str]
-    gaps: list[str]
-    summary: str
+router = APIRouter(tags=["explain"], dependencies=[Depends(require_api_key)])
 
 @router.post("/explain", response_model=ExplainResponse)
 async def explain(request: ExplainRequest):
+    if len(request.jd_text) > settings.max_jd_length:
+        raise HTTPException(422, "Job description is too long")
     service_container = get_service_container()
     vs = service_container.get_vector_store
 
-    result = vs.collection.get(where={"resume_id": request.resume_id})
+    internal_id = vs.resolve_resume_id(request.resume_id)
+    if internal_id is None:
+        raise HTTPException(404, "resume not found")
+    result = vs.collection.get(where={"resume_id": internal_id})
     if not result['documents']:
         raise HTTPException(404, "resume not found")
 
@@ -30,18 +25,21 @@ async def explain(request: ExplainRequest):
     full_resume_text = resume_text[:3000]
 
     chain = service_container.get_llm_chain
-    # use ainvoke for async endpoint
-    llm_result = chain.invoke({
+    llm_result = await chain.ainvoke({
         'jd_text': request.jd_text,
         'resume_id': request.resume_id,
         'full_resume_text': full_resume_text
     })
 
     # llm_result.content is a JSON string
-    data = json.loads(llm_result.content) # type: ignore
+    try:
+        data = json.loads(str(llm_result.content))
+        validated = ExplainResponse(
+            resume_id=request.resume_id,
+            match_score=75 if data.get("verdict") == "Strong Match" else 55 if data.get("verdict") == "Partial Match" else 20,
+            **data,
+        )
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
+        raise HTTPException(502, "The explanation service returned an invalid response") from exc
 
-    return {
-        "resume_id": request.resume_id,
-        "match_score": 75 if data['verdict'] == "Strong Match" else 55 if data['verdict'] == "Partial Match" else 20,
-        **data
-    }
+    return validated

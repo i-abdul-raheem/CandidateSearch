@@ -1,7 +1,7 @@
 [project]
 name = "candidate-search"
 version = "0.1.0"
-description = "wii update later"
+description = "Semantic candidate search and resume-to-job matching API"
 author = "Abdul Raheem"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -19,5 +19,15 @@ dependencies = [
     "sentence-transformers>=5.7.0",
     "tqdm>=4.70.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
 [tool.fastapi]
 reload_excludes = [".venv", "data", "chroma_db"]
