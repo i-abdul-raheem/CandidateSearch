@@ -21,6 +21,11 @@ class ServiceContainer:
         return DataLoader(data_dir=self.config.resume_dir)
 
     @cached_property
+    def get_metadata_store(self):
+        from src.store.metadata_db import MetadataStore
+        return MetadataStore(self.config.data_dir / "candidate_search.sqlite3")
+
+    @cached_property
     def get_llm_chain(self):
         from langchain_ollama import ChatOllama
         from langchain_core.prompts import ChatPromptTemplate

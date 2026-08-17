@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.config import settings
-from src.routers import apply, explain, files, query
+from src.routers import apply, explain, files, query, roles, searches, talent
 
 
 logger = logging.getLogger(__name__)
@@ -32,12 +32,15 @@ def create_app() -> FastAPI:
         docs_url=None if settings.environment == "production" else "/docs",
         redoc_url=None if settings.environment == "production" else "/redoc",
     )
-    if settings.cors_origins:
+    cors_origins = settings.cors_origins
+    if not cors_origins and settings.environment != "production":
+        cors_origins = ("http://localhost:3000", "http://127.0.0.1:3000")
+    if cors_origins:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=list(settings.cors_origins),
+            allow_origins=list(cors_origins),
             allow_credentials=False,
-            allow_methods=["GET", "POST"],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
             allow_headers=["Content-Type", "X-API-Key", "X-Request-ID"],
         )
 
@@ -79,4 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(apply.router)
     app.include_router(explain.router)
     app.include_router(files.router)
+    app.include_router(talent.router)
+    app.include_router(roles.router)
+    app.include_router(searches.router)
     return app

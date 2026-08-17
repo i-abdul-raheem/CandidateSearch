@@ -1,0 +1,10 @@
+export type Evidence = { score: number; text: string; section: string | null };
+export type Candidate = { id: string; resume_id: string; score: number; evidence: Evidence[] };
+export type Explanation = { resume_id: string; match_score: number; verdict: string; strengths: string[]; gaps: string[]; summary: string };
+export type SearchResponse = { results: Candidate[] };
+export type UploadResponse = { message: string; resume_id: string };
+export type TalentCandidate = { resume_id: string; resume_url: string; filename: string; sections: string[] };
+export type TalentPoolResponse = { results: TalentCandidate[]; total: number };
+export type RoleInput = { title: string; department: string; location: string; work_mode: string; description: string; status: "open" | "paused" | "closed" };
+export type Role = RoleInput & { id: string; created_at: string; updated_at: string };
+export type RecentSearch = { id: string; query: string; result_count: number; created_at: string };

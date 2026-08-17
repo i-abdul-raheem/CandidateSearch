@@ -23,9 +23,15 @@ Health endpoints remain unauthenticated for container orchestrators.
 ## Endpoints
 
 - `GET /?q=python&top_k_people=3` searches indexed candidates.
+- `POST /query` accepts full job descriptions as JSON without an application-level
+  length limit. Long descriptions are embedded in chunks so later requirements are
+  not silently truncated.
 - `POST /apply` accepts one PDF as multipart field `file` and returns an opaque ID.
 - `POST /explain` accepts `resume_id` and `jd_text` as JSON.
 - `GET /file/{resume_id}` returns the uploaded PDF inline.
+- `GET /talent` lists the indexed talent pool; `DELETE /talent/{resume_id}` removes a candidate.
+- `/roles` provides recruiter role CRUD (`GET`, `POST`, `PUT`, `DELETE`).
+- `GET /searches` lists persisted searches; `DELETE /searches/{id}` or `DELETE /searches` removes them.
 - `GET /health/live` and `GET /health/ready` support operational probes.
 
 Each search result uses the absolute resume URL as `id` and also contains the stable

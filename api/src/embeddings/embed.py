@@ -1,6 +1,8 @@
 import hashlib
 from typing import Any
 
+import numpy as np
+
 from langchain_core.documents import Document
 from sentence_transformers import SentenceTransformer
 
@@ -52,3 +54,18 @@ class EmbeddingManager:
             }
             for i, (c, emb) in enumerate(zip(valid_chunks, embeddings))
         ]
+
+    def generate_query_embedding(self, text: str) -> list[float]:
+        """Embed arbitrarily long search text without silently dropping its tail."""
+        chunks = [text[start:start + 1800] for start in range(0, len(text), 1800)]
+        vectors = self.model.encode(
+            [f"query: {chunk}" for chunk in chunks],
+            batch_size=16,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
+        vector = np.asarray(vectors).mean(axis=0)
+        norm = np.linalg.norm(vector)
+        if norm:
+            vector = vector / norm
+        return vector.tolist()

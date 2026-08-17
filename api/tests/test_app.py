@@ -14,9 +14,13 @@ def test_liveness() -> None:
 def test_public_api_is_in_openapi_schema() -> None:
     paths = create_app().openapi()["paths"]
     assert "/" in paths
+    assert "/query" in paths
     assert "/apply" in paths
     assert "/explain" in paths
     assert "/file/{resume_id}" in paths
+    assert "/talent" in paths
+    assert "/roles" in paths
+    assert "/searches" in paths
 
 
 def test_file_endpoint_rejects_invalid_resume_id() -> None:

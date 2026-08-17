@@ -20,8 +20,6 @@ class Settings:
     ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen3:4b")
     ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     max_upload_bytes: int = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
-    max_query_length: int = int(os.getenv("MAX_QUERY_LENGTH", "2000"))
-    max_jd_length: int = int(os.getenv("MAX_JD_LENGTH", "20000"))
     api_key: str | None = os.getenv("API_KEY") or None
     cors_origins: tuple[str, ...] = _csv("CORS_ORIGINS")
 

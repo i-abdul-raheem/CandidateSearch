@@ -1,7 +1,6 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from src.container import get_service_container
-from src.config import settings
 from src.schemas import ExplainRequest, ExplainResponse
 from src.security import require_api_key
 
@@ -9,8 +8,6 @@ router = APIRouter(tags=["explain"], dependencies=[Depends(require_api_key)])
 
 @router.post("/explain", response_model=ExplainResponse)
 async def explain(request: ExplainRequest):
-    if len(request.jd_text) > settings.max_jd_length:
-        raise HTTPException(422, "Job description is too long")
     service_container = get_service_container()
     vs = service_container.get_vector_store
 

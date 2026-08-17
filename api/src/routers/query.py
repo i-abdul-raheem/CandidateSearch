@@ -3,8 +3,7 @@ from collections import defaultdict
 from fastapi import APIRouter, Depends, Query, Request
 from starlette.concurrency import run_in_threadpool
 from src.container import get_service_container
-from src.config import settings
-from src.schemas import CandidateMatch, Evidence, SearchResponse
+from src.schemas import CandidateMatch, Evidence, SearchRequest, SearchResponse
 from src.security import require_api_key
 
 router = APIRouter(tags=["query"], dependencies=[Depends(require_api_key)])
@@ -15,24 +14,32 @@ async def query(
     q: str = Query(min_length=2),
     top_k_people: int = Query(default=3, ge=1, le=20),
 ) -> SearchResponse:
-    if len(q) > settings.max_query_length:
-        from fastapi import HTTPException
-        raise HTTPException(422, "Query is too long")
+    return await search(request, q, top_k_people)
+
+
+@router.post("/query", response_model=SearchResponse)
+async def query_job_description(request: Request, payload: SearchRequest) -> SearchResponse:
+    response = await search(request, payload.query, payload.top_k_people)
+    await run_in_threadpool(
+        get_service_container().get_metadata_store.record_search,
+        payload.query,
+        len(response.results),
+    )
+    return response
+
+
+async def search(request: Request, query_text: str, top_k_people: int) -> SearchResponse:
     service_container = get_service_container()
     em = service_container.get_embedding_manager
     vs = service_container.get_vector_store
 
-    query_vector = await run_in_threadpool(em.model.encode,
-        [f"query: {q}"],
-        normalize_embeddings=True
-    )
-    query_vector = query_vector.tolist()
+    query_vector = await run_in_threadpool(em.generate_query_embedding, query_text)
 
     available = vs.collection.count()
     if available == 0:
         return SearchResponse(results=[])
     results = await run_in_threadpool(vs.collection.query,
-        query_embeddings=query_vector,
+        query_embeddings=[query_vector],
         n_results=min(max(top_k_people * 10, 30), available),
     )
 

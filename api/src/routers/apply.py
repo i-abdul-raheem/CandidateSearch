@@ -1,13 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, status
+from fastapi import APIRouter, File, UploadFile, HTTPException, status
 from starlette.concurrency import run_in_threadpool
 from src.container import get_service_container
 from src.config import settings
 from src.schemas import UploadResponse
-from src.security import require_api_key
 
-router = APIRouter(tags=["apply"], dependencies=[Depends(require_api_key)])
+router = APIRouter(tags=["apply"])
 
 @router.post("/apply", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 async def apply_job(
